@@ -77,21 +77,18 @@ app.post('/login', async (req, res) => {
     const { email, senha } = req.body;
 
     if (!email || !senha) {
-      // Se os dados não forem fornecidos, redirecione para a página inicial
-      return res.redirect('/');
+      return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
     }
 
     // Verificar se a conexão está disponível
     if (!global.connection) {
-      // Em caso de erro na conexão, redirecione para a página inicial
-      return res.redirect('/');
+      return res.status(500).json({ error: 'Erro na conexão com o banco de dados' });
     }
 
     const result = await global.connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
 
     if (result.rows.length === 0 || senha !== result.rows[0].senha) {
-      // Em caso de credenciais inválidas, redirecione para a página inicial
-      return res.redirect('/');
+      return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
     // Definir a sessão do usuário
@@ -104,22 +101,15 @@ app.post('/login', async (req, res) => {
     // Log de sucesso
     console.log(`Login bem-sucedido para o usuário: ${email}`);
 
-    // Redirecionar para a página 'hello'
-    res.redirect('/hello');
+    res.json({ success: true });
   } catch (error) {
     console.error('Erro ao fazer login:', error);
-    // Em caso de erro no servidor, redirecione para a página inicial
-    res.redirect('/');
+    res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 
-// Página 'hello' (adicionar a rota correspondente)
-app.get('/hello', Autenticado, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'hello.html'));
-});
-
-// Rota para obter informações sobre o usuário logado
 app.get('/api/usuario-logado', (req, res) => {
+   
   if (req.session.user) {
     res.json({
       id_usuario: req.session.user.id_usuario,
@@ -130,7 +120,6 @@ app.get('/api/usuario-logado', (req, res) => {
     res.status(401).json({ error: 'Usuário não logado' });
   }
 });
-
 
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
