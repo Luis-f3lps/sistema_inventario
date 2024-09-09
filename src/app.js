@@ -2,20 +2,16 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import session from 'express-session'; 
-import { Pool } from 'pg';
-import { log } from 'console';
+import session from 'express-session';
+import pkg from 'pg';
 
-// Carregar variáveis de ambiente
+const { Pool } = pkg;
+
 dotenv.config();
 
+const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-const app = express();
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 // Configurar middleware de sessão
 app.use(session({
@@ -29,23 +25,23 @@ app.use(session({
 }));
 
 
-app.listen(process.env.PORT, () => console.log("server run na porta 5000"))
 
-// Inicializar banco de dados
 async function initializeDatabase() {
   try {
     console.log("Database URL:", process.env.DATABASE_URL);
-    
+
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: {
         rejectUnauthorized: false
       }
     });
-    
+
+    // Testar conexão
     const client = await pool.connect();
     console.log("Connected to PostgreSQL database");
     client.release();
+
     return pool;
   } catch (error) {
     console.error("Failed to connect to PostgreSQL database:", error);
@@ -55,9 +51,18 @@ async function initializeDatabase() {
 
 let connection;
 
+// Função para verificar autenticação
+function Autenticado(req, res, next) {
+  if (req.session.user) {
+    return next();
+  } else {
+    res.redirect('/');
+  }
+}
+
 // Configurar rotas e iniciar o servidor
-initializeDatabase().then(conn => {
-  connection = conn;
+initializeDatabase().then(pool => {
+  connection = pool; // Pool será utilizado para fazer consultas
 
   app.use(express.static(path.join(__dirname, 'public')));
 
@@ -75,16 +80,16 @@ initializeDatabase().then(conn => {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
 
-      const [rows] = await connection.query('SELECT * FROM usuario WHERE email = ?', [email]);
-      
-      if (rows.length === 0 || senha !== rows[0].senha) {
+      const result = await connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
+
+      if (result.rows.length === 0 || senha !== result.rows[0].senha) {
         return res.status(401).json({ error: 'Credenciais inválidas' });
       }
 
       req.session.user = {
-        nome: rows[0].nome_usuario,
-        email: rows[0].email,
-        tipo_usuario: rows[0].tipo_usuario
+        nome: result.rows[0].nome_usuario,
+        email: result.rows[0].email,
+        tipo_usuario: result.rows[0].tipo_usuario
       };
 
       res.json({ success: true });
@@ -94,14 +99,119 @@ initializeDatabase().then(conn => {
     }
   });
 
-  // Rota protegida
-  function Autenticado(req, res, next) {
+  // Rotas protegidas
+  app.get('/Relatorio', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
+  });
+
+  app.get('/Usuarios', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
+  });
+
+  app.get('/Produtos', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Produtos.html'));
+  });
+
+  app.get('/Laboratorio', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Laboratorio.html'));
+  });
+
+  app.get('/api/usuario-logado', (req, res) => {
+   
     if (req.session.user) {
-      return next();
+      res.json({
+        id_usuario: req.session.user.id_usuario,
+        nome: req.session.user.nome,
+        tipo_usuario: req.session.user.tipo_usuario
+      });
     } else {
-      res.redirect('/');
+      res.status(401).json({ error: 'Usuário não logado' });
     }
+  });
+
+  app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+      if (err) {
+        console.error('Erro ao destruir a sessão:', err);
+        return res.status(500).json({ error: 'Erro ao fazer logout' });
+      }
+      res.clearCookie('connect.sid');
+      res.redirect('/');
+    });
+  });
+
+  // Middleware para desativar cache
+  function disableCache(req, res, next) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
   }
+
+  app.use('/protected/*', disableCache);
+
+  // Rotas para usuários
+  app.get('/api/usuarios', Autenticado, async (req, res) => {
+    try {
+      const result = await connection.query('SELECT nome_usuario, email FROM usuario');
+      res.json(result.rows);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Erro no servidor' });
+    }
+  });
+
+  app.post('/api/usuarios', Autenticado, async (req, res) => {
+    const { nome_usuario, email, senha, tipo_usuario } = req.body;
+  
+    if (!nome_usuario || !email || !senha || !tipo_usuario) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
+    }
+  
+    try {
+      // Verificar se o nome de usuário já existe
+      const resultByName = await connection.query(
+        'SELECT id_usuario FROM usuario WHERE nome_usuario = $1',
+        [nome_usuario]
+      );
+  
+      if (resultByName.rows.length > 0) {
+        return res.status(400).json({ error: 'Nome de usuário já está em uso' });
+      }
+  
+      // Verificar se o email já existe
+      const resultByEmail = await connection.query(
+        'SELECT id_usuario FROM usuario WHERE email = $1',
+        [email]
+      );
+  
+      if (resultByEmail.rows.length > 0) {
+        return res.status(400).json({ error: 'Email já está em uso' });
+      }
+  
+      // Inserir o novo usuário
+      await connection.query(
+        'INSERT INTO usuario (nome_usuario, email, senha, tipo_usuario) VALUES ($1, $2, $3, $4)',
+        [nome_usuario, email, senha, tipo_usuario]
+      );
+  
+      res.status(201).json({ message: 'Usuário adicionado com sucesso' });
+    } catch (error) {
+      console.error('Erro ao adicionar usuário:', error);
+      res.status(500).json({ error: 'Erro no servidor' });
+    }
+  });
+
+  // Iniciar servidor
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Servidor rodando na porta ${port}`);
+  });
+
+}).catch(error => {
+  console.error("Initialization failed:", error);
+});
+
 
   // Outras rotas
   app.get('/Relatorio', Autenticado, (req, res) => {
@@ -231,6 +341,8 @@ app.get('/api/check-auth', (req, res) => {
       res.json({ Autenticado: false });
   }
 });
+
+
 
   /* --------------produtos------------------*/
 
@@ -438,17 +550,6 @@ app.get('/api/estoque/:sigla', Autenticado, async (req, res) => {
       console.error('Erro ao carregar estoque:', error);
       res.status(500).json({ error: 'Erro ao carregar estoque' });
   }
-});
-
-  /* --------------servidor------------------*/
-
-  // Iniciar o servidor
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando no endereço http://localhost:${PORT}`);
-  });
-}).catch(error => {
-  console.error("Initialization failed:", error);
 });
 
 
