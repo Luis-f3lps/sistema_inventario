@@ -62,11 +62,6 @@ async function initializeDatabase() {
 }
 
 
-
-
-// Iniciar o servidor após a conexão com o banco de dados ser estabelecida
-initializeDatabase().then(() => {
-
 // Middleware para verificar se o usuário está autenticado
 function Autenticado(req, res, next) {
   if (req.session.user) {
@@ -1261,8 +1256,11 @@ app.post('/api/filter_records', Autenticado, async (req, res) => {
   }
 });
 
-}).catch(error => {
-  console.error("Error initializing database:", error);
+// Iniciar o servidor após a conexão com o banco de dados ser estabelecida
+initializeDatabase().then(() => {
+  app.listen(process.env.PORT || 5000, () => {
+    console.log('Server is running');
+  });
 });
 
 export default app;
