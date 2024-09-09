@@ -7,7 +7,7 @@ import pkg from 'pg';
 
 const { Pool } = pkg;
 
-dotenv.config();
+dotenv.config(); // Carrega as variáveis de ambiente
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -15,17 +15,16 @@ const __dirname = path.dirname(__filename);
 
 // Configurar middleware de sessão
 app.use(session({
-  secret: 'seuSegredo', // substitua por uma senha 
+  secret: process.env.SESSION_SECRET || 'seuSegredo', // Use uma variável de ambiente para o segredo
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    secure: false, // Use 'true' em produção com HTTPS
-    maxAge: 8 * 60 * 60 * 1000, // 8 horas em milissegundos
+    secure: process.env.NODE_ENV === 'production', // true em produção com HTTPS
+    maxAge: 8 * 60 * 60 * 1000, // 8 horas
   }
 }));
 
-
-
+// Função para inicializar a conexão com o banco de dados
 async function initializeDatabase() {
   try {
     console.log("Database URL:", process.env.DATABASE_URL);
@@ -33,11 +32,11 @@ async function initializeDatabase() {
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false // SSL para o Neon
       }
     });
 
-    // Testar conexão
+    // Testar a conexão
     const client = await pool.connect();
     console.log("Connected to PostgreSQL database");
     client.release();
@@ -51,7 +50,7 @@ async function initializeDatabase() {
 
 let connection;
 
-// Função para verificar autenticação
+// Função para verificar se o usuário está autenticado
 function Autenticado(req, res, next) {
   if (req.session.user) {
     return next();
@@ -60,20 +59,35 @@ function Autenticado(req, res, next) {
   }
 }
 
-// Configurar rotas e iniciar o servidor
+// Inicializando banco de dados e configurando rotas
 initializeDatabase().then(pool => {
-  connection = pool; // Pool será utilizado para fazer consultas
+  connection = pool; // Pool será utilizado para consultas
 
   app.use(express.static(path.join(__dirname, 'public')));
 
-  // Rotas
+  // Rota inicial
   app.get('/', (req, res) => {
     const data = {
       message: 'Hello, world!',
     };
     res.json(data);
   });
-  
+
+  // Exemplo de rota protegida
+  app.get('/dashboard', Autenticado, (req, res) => {
+    res.send('Welcome to your dashboard!');
+  });
+
+  // Iniciar o servidor
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+  });
+
+}).catch(error => {
+  console.error("Error initializing database:", error);
+});
+
   // Rota de login
   app.post('/login', async (req, res) => {
     try {
@@ -205,15 +219,6 @@ initializeDatabase().then(pool => {
     }
   });
 
-  // Iniciar servidor
-  const port = process.env.PORT || 5000;
-  app.listen(port, () => {
-    console.log(`Servidor rodando na porta ${port}`);
-  });
-
-}).catch(error => {
-  console.error("Initialization failed:", error);
-});
 
 
   // Outras rotas
