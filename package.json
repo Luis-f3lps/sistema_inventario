@@ -8,8 +8,7 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "node src/app.js",
-    "build": "echo 'No build step required' && exit 0"
+    "dev": "node src/app.js"
   },
   "keywords": [],
   "author": "",
