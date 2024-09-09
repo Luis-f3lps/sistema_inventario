@@ -1,20 +1,20 @@
 ﻿import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import PDFDocument from 'pdfkit';
-import fs from 'fs';
+import dotenv from 'dotenv';
 import session from 'express-session'; 
+import { Pool } from 'pg';
 
-initializeDatabase();
+// Carregar variáveis de ambiente
+dotenv.config();
+
+const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
-
+// Configurar middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Configurar middleware de sessão
 app.use(session({
   secret: 'seuSegredo', // substitua por uma senha 
   resave: false,
@@ -25,23 +25,11 @@ app.use(session({
   }
 }));
 
-// autenticação
-function Autenticado(req, res, next) {
-  if (req.session.user) {
-    return next();
-  } else {
-    res.redirect('/');
-  }
-}
-
 // Inicializar banco de dados
-import { Pool } from 'pg';
-
 async function initializeDatabase() {
   try {
     console.log("Database URL:", process.env.DATABASE_URL);
     
-    // Cria a conexão com o banco de dados
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: {
@@ -49,7 +37,6 @@ async function initializeDatabase() {
       }
     });
     
-    // Testa a conexão
     const client = await pool.connect();
     console.log("Connected to PostgreSQL database");
     client.release();
@@ -60,9 +47,6 @@ async function initializeDatabase() {
   }
 }
 
-// Executar a função de inicialização
-initializeDatabase();
-
 let connection;
 
 // Configurar rotas e iniciar o servidor
@@ -71,113 +55,98 @@ initializeDatabase().then(conn => {
 
   app.use(express.static(path.join(__dirname, 'public')));
 
-  // Rota principal
+  // Rotas
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
-
-  /* --------------login------------------*/
 
   // Rota de login
   app.post('/login', async (req, res) => {
     try {
       const { email, senha } = req.body;
-  
+
       if (!email || !senha) {
         return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
       }
-  
-      const [rows] = await connection.execute('SELECT * FROM usuario WHERE email = ?', [email]);
+
+      const [rows] = await connection.query('SELECT * FROM usuario WHERE email = ?', [email]);
       
-      console.log('Usuário encontrado:', rows); // Adicione este log
-  
       if (rows.length === 0 || senha !== rows[0].senha) {
-        console.error('Credenciais inválidas');
         return res.status(401).json({ error: 'Credenciais inválidas' });
       }
-  
-      const user = rows[0];
-  
+
       req.session.user = {
-        nome: user.nome_usuario,
-        email: user.email,
-        tipo_usuario: user.tipo_usuario
+        nome: rows[0].nome_usuario,
+        email: rows[0].email,
+        tipo_usuario: rows[0].tipo_usuario
       };
-  
+
       res.json({ success: true });
     } catch (error) {
       console.error('Erro ao fazer login:', error);
       res.status(500).json({ error: 'Erro no servidor' });
     }
   });
-  
-    // Rotas protegidas
-    function authenticate(req, res, next) {
-      if (req.session && req.session.userId) {
-          next();
-      } else {
-          res.status(401).send('Não autorizado');
-      }
-  }
-  
+
   // Rota protegida
-  app.get('/protected-route', authenticate, (req, res) => {
-      res.send('Conteúdo protegido');
+  function Autenticado(req, res, next) {
+    if (req.session.user) {
+      return next();
+    } else {
+      res.redirect('/');
+    }
+  }
+
+  // Outras rotas
+  app.get('/Relatorio', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
   });
 
+  app.get('/Usuarios', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
+  });
 
-    app.get('/Relatorio', Autenticado, (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
-    });
-  
-    app.get('/Usuarios', Autenticado, (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
-    });
-  
-    app.get('/Produtos', Autenticado, (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'Produtos.html'));
-    });
-  
-    app.get('/Laboratorio', Autenticado, (req, res) => {
-      res.sendFile(path.join(__dirname, 'public', 'Laboratorio.html'));
-    });
+  app.get('/Produtos', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Produtos.html'));
+  });
 
-  /* --------------usuario------------------*/
+  app.get('/Laboratorio', Autenticado, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'Laboratorio.html'));
+  });
 
-  // Rota para obter o usuário logado
   app.get('/api/usuario-logado', (req, res) => {
     if (req.session.user) {
-        res.json({
-            id_usuario: req.session.user.id_usuario,
-            nome: req.session.user.nome,
-            tipo_usuario: req.session.user.tipo_usuario // Retornando o tipo do usuário
-        });
+      res.json({
+        id_usuario: req.session.user.id_usuario,
+        nome: req.session.user.nome,
+        tipo_usuario: req.session.user.tipo_usuario
+      });
     } else {
-        res.status(401).json({ error: 'Usuário não logado' });
+      res.status(401).json({ error: 'Usuário não logado' });
     }
-});
-
-app.get('/logout', (req, res) => {
-  req.session.destroy(err => {
-    if (err) {
-      console.error('Erro ao destruir a sessão:', err);
-      return res.status(500).json({ error: 'Erro ao fazer logout' });
-    }
-    res.clearCookie('connect.sid'); // Limpa o cookie da sessão
-    res.redirect('/');
   });
-});
 
-// Middleware para desativar cache
-function disableCache(req, res, next) {
-  res.setHeader('Cache-Control', 'no-store');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  next();
-}
+  app.get('/logout', (req, res) => {
+    req.session.destroy(err => {
+      if (err) {
+        console.error('Erro ao destruir a sessão:', err);
+        return res.status(500).json({ error: 'Erro ao fazer logout' });
+      }
+      res.clearCookie('connect.sid');
+      res.redirect('/');
+    });
+  });
 
-// Aplica o middleware a todas as rotas protegidas
-app.use('/protected/*', disableCache);
+  // Middleware para desativar cache
+  function disableCache(req, res, next) {
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+  }
+
+  app.use('/protected/*', disableCache);
+
 
   // Rotas para usuários
   app.get('/api/usuarios', Autenticado, async (req, res) => {
