@@ -73,7 +73,7 @@ initializeDatabase().then(pool => {
 
   // Rota inicial
   app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html')); // Certifique-se de que o arquivo index.html existe
+    res.send('Hello, world!');
   });
   
 
