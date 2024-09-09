@@ -33,6 +33,14 @@ app.use(session({
   }
 }));
 
+// Middleware para verificar se o usuário está autenticado
+function Autenticado(req, res, next) {
+  if (req.session.user) {
+    return next();
+  } else {
+    res.redirect('/');
+  }
+}
 
 // Função para inicializar a conexão com o banco de dados
 async function initializeDatabase() {
@@ -61,15 +69,14 @@ async function initializeDatabase() {
   }
 }
 
+// Iniciar o servidor após a conexão com o banco de dados ser estabelecida
+initializeDatabase().then(() => {
+  app.listen(process.env.PORT || 5000, () => {
+    console.log('Server is running');
+  });
+});
 
-// Middleware para verificar se o usuário está autenticado
-function Autenticado(req, res, next) {
-  if (req.session.user) {
-    return next();
-  } else {
-    res.redirect('/');
-  }
-}
+
 
 // Rota de login
 app.post('/login', async (req, res) => {
@@ -1255,13 +1262,6 @@ app.post('/api/filter_records', Autenticado, async (req, res) => {
       console.error('Erro ao filtrar registros:', error);
       res.status(500).json({ error: 'Erro ao filtrar registros.' });
   }
-});
-
-// Iniciar o servidor após a conexão com o banco de dados ser estabelecida
-initializeDatabase().then(() => {
-  app.listen(process.env.PORT || 5000, () => {
-    console.log('Server is running');
-  });
 });
 
 export default app;
