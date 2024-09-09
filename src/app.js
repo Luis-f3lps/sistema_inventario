@@ -98,18 +98,15 @@ app.post('/login', async (req, res) => {
       tipo_usuario: result.rows[0].tipo_usuario
     };
 
-    // Log de sucesso
-    console.log(`Login bem-sucedido para o usuário: ${email}`);
+  // Log de sucesso
+  console.log(`Login bem-sucedido para o usuário: ${email}`);
+  console.log('Sessão após login:', req.session.user);
 
-    // Redirecionar para a página "Hello World"
-    res.redirect('/hello');
+    res.json({ success: true });
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ error: 'Erro no servidor' });
   }
-});
-app.get('/hello', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'helo.html'));
 });
 
 app.get('/api/usuario-logado', (req, res) => {
@@ -124,7 +121,6 @@ app.get('/api/usuario-logado', (req, res) => {
     res.status(401).json({ error: 'Usuário não logado' });
   }
 });
-
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
