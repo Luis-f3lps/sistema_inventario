@@ -116,6 +116,22 @@ initializeDatabase().then(pool => {
     }
   });
 
+    // Rotas protegidas
+    function authenticate(req, res, next) {
+      if (req.session && req.session.userId) {
+          next();
+      } else {
+          res.status(401).send('Não autorizado');
+      }
+  }
+  
+  // Rota protegida
+  app.get('/protected-route', authenticate, (req, res) => {
+      res.send('Conteúdo protegido');
+  });
+
+
+
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
