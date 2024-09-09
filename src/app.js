@@ -88,49 +88,47 @@ initializeDatabase().then(pool => {
   console.error("Error initializing database:", error);
 });
 
-  // Rota de login
-  app.post('/login', async (req, res) => {
-    try {
-      const { email, senha } = req.body;
+// Rota de login
+app.post('/login', async (req, res) => {
+  try {
+    const { email, senha } = req.body;
 
-      if (!email || !senha) {
-        return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
-      }
-
-      const result = await connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
-
-      if (result.rows.length === 0 || senha !== result.rows[0].senha) {
-        return res.status(401).json({ error: 'Credenciais inválidas' });
-      }
-
-      req.session.user = {
-        nome: result.rows[0].nome_usuario,
-        email: result.rows[0].email,
-        tipo_usuario: result.rows[0].tipo_usuario
-      };
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      res.status(500).json({ error: 'Erro no servidor' });
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
     }
-  });
 
-    // Rotas protegidas
-    function authenticate(req, res, next) {
-      if (req.session && req.session.userId) {
-          next();
-      } else {
-          res.status(401).send('Não autorizado');
-      }
+    const result = await pool.query('SELECT * FROM usuario WHERE email = $1', [email]);
+
+    if (result.rows.length === 0 || senha !== result.rows[0].senha) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    req.session.user = {
+      nome: result.rows[0].nome_usuario,
+      email: result.rows[0].email,
+      tipo_usuario: result.rows[0].tipo_usuario
+    };
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao fazer login:', error);
+    res.status(500).json({ error: 'Erro no servidor' });
   }
-  
-  // Rota protegida
-  app.get('/protected-route', authenticate, (req, res) => {
-      res.send('Conteúdo protegido');
-  });
+});
 
+// Middleware para autenticação
+function authenticate(req, res, next) {
+  if (req.session && req.session.user) {
+    next();
+  } else {
+    res.status(401).send('Não autorizado');
+  }
+}
 
+// Rota protegida
+app.get('/protected-route', authenticate, (req, res) => {
+  res.send('Conteúdo protegido');
+});
 
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
