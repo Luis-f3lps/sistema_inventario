@@ -68,9 +68,12 @@ initializeDatabase().then(pool => {
 
   // Rotas
   app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const data = {
+      message: 'Hello, world!',
+    };
+    res.json(data);
   });
-
+  
   // Rota de login
   app.post('/login', async (req, res) => {
     try {
