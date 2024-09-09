@@ -90,11 +90,15 @@ app.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
+    // Definir a sessão do usuário
     req.session.user = {
       nome: result.rows[0].nome_usuario,
       email: result.rows[0].email,
       tipo_usuario: result.rows[0].tipo_usuario
     };
+
+    // Log de sucesso
+    console.log(`Login bem-sucedido para o usuário: ${email}`);
 
     res.json({ success: true });
   } catch (error) {
@@ -102,6 +106,7 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
+
 
 // Iniciar o servidor após a conexão com o banco de dados ser estabelecida
 initializeDatabase().then(() => {
