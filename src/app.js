@@ -7,7 +7,7 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import session from 'express-session'; 
 
-dotenv.config({ path: 'D:/mariadb-10.4.11-winx64/variaveis.env' });
+dotenv.config(); 
 
 
 initializeDatabase();
