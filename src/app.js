@@ -61,6 +61,12 @@ async function initializeDatabase() {
   }
 }
 
+
+
+
+// Iniciar o servidor após a conexão com o banco de dados ser estabelecida
+initializeDatabase().then(() => {
+
 // Middleware para verificar se o usuário está autenticado
 function Autenticado(req, res, next) {
   if (req.session.user) {
@@ -107,9 +113,6 @@ app.post('/login', async (req, res) => {
   }
 });
 
-
-// Iniciar o servidor após a conexão com o banco de dados ser estabelecida
-initializeDatabase().then(() => {
 
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
