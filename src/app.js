@@ -120,9 +120,6 @@ initializeDatabase().then(() => {
     res.send('Conteúdo protegido');
   });
 
-}).catch(error => {
-  console.error("Error initializing database:", error);
-});
 
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
@@ -1311,6 +1308,10 @@ app.post('/api/filter_records', Autenticado, async (req, res) => {
       console.error('Erro ao filtrar registros:', error);
       res.status(500).json({ error: 'Erro ao filtrar registros.' });
   }
+});
+
+}).catch(error => {
+  console.error("Error initializing database:", error);
 });
 
 export default app;
