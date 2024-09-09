@@ -33,14 +33,6 @@ app.use(session({
   }
 }));
 
-// Middleware para verificar se o usuário está autenticado
-function Autenticado(req, res, next) {
-  if (req.session.user) {
-    return next();
-  } else {
-    res.redirect('/');
-  }
-}
 
 // Função para inicializar a conexão com o banco de dados
 async function initializeDatabase() {
@@ -68,28 +60,21 @@ async function initializeDatabase() {
     throw error;
   }
 }
-
-// Executar a função de inicialização
-initializeDatabase();
-
-let connection;
-
-
 // Iniciar o servidor após a conexão com o banco de dados ser estabelecida
 initializeDatabase().then(() => {
-  connection = conn;
-
-  app.use(express.static(path.join(__dirname, 'public')));
-
-  // Rota principal
-  app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  });
-
   app.listen(process.env.PORT || 5000, () => {
     console.log('Server is running');
   });
 });
+
+// Middleware para verificar se o usuário está autenticado
+function Autenticado(req, res, next) {
+  if (req.session.user) {
+    return next();
+  } else {
+    res.redirect('/');
+  }
+}
 
 // Rota de login
 app.post('/login', async (req, res) => {
@@ -141,22 +126,6 @@ app.get('/api/usuario-logado', (req, res) => {
     res.status(401).json({ error: 'Usuário não logado' });
   }
 });
-
-    // Rotas protegidas
-    function authenticate(req, res, next) {
-      if (req.session && req.session.userId) {
-          next();
-      } else {
-          res.status(401).send('Não autorizado');
-      }
-  }
-  
-  // Rota protegida
-  app.get('/protected-route', authenticate, (req, res) => {
-      res.send('Conteúdo protegido');
-  });
-
-
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
