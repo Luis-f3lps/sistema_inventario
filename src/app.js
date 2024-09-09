@@ -101,11 +101,15 @@ app.post('/login', async (req, res) => {
     // Log de sucesso
     console.log(`Login bem-sucedido para o usuário: ${email}`);
 
-    res.json({ success: true });
+    // Redirecionar para a página "Hello World"
+    res.redirect('/hello');
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ error: 'Erro no servidor' });
   }
+});
+app.get('/hello', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'helo.html'));
 });
 
 app.get('/api/usuario-logado', (req, res) => {
