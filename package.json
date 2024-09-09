@@ -8,7 +8,8 @@
     "node": "20.x"
   },
   "scripts": {
-    "dev": "node src/app.js"
+    "dev": "node src/app.js",
+    "build": "node build.js"
   },
   "keywords": [],
   "author": "",
