@@ -34,6 +34,7 @@ app.use(session({
 async function initializeDatabase() {
   try {
     console.log("Database URL:", process.env.DATABASE_URL);
+    app.use(express.static(path.join(__dirname, 'public')));
 
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
@@ -65,15 +66,9 @@ function Autenticado(req, res, next) {
     res.redirect('/');
   }
 }
-  // Rota inicial
-  app.get('/', (req, res) => {
-    res.send('Hello, world!');
-  });
-// Inicializando banco de dados e configurando rotas
 initializeDatabase().then(pool => {
   connection = pool; // Pool será utilizado para consultas
 
-  app.use(express.static(path.join(__dirname, 'public')));
 
   app.use(express.json());
 
