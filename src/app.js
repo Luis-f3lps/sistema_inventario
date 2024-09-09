@@ -7,9 +7,6 @@ import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import session from 'express-session'; 
 
-dotenv.config(); 
-
-
 initializeDatabase();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
