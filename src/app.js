@@ -14,14 +14,9 @@ if (!process.env.DATABASE_URL) {
   process.exit(1); // Finaliza o processo com erro
 }
 
-
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const express = require('express');
-const session = require('express-session');
-const pg = require('pg'); // ou o cliente que você está usando para conectar ao PostgreSQL
-
 
 // Middleware para interpretar JSON
 app.use(express.json());
@@ -37,6 +32,7 @@ app.use(session({
     maxAge: 8 * 60 * 60 * 1000, // 8 horas
   }
 }));
+
 
 // Função para inicializar a conexão com o banco de dados
 async function initializeDatabase() {
