@@ -77,18 +77,21 @@ app.post('/login', async (req, res) => {
     const { email, senha } = req.body;
 
     if (!email || !senha) {
-      return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
+      // Se os dados não forem fornecidos, redirecione para a página inicial
+      return res.redirect('/');
     }
 
     // Verificar se a conexão está disponível
     if (!global.connection) {
-      return res.status(500).json({ error: 'Erro na conexão com o banco de dados' });
+      // Em caso de erro na conexão, redirecione para a página inicial
+      return res.redirect('/');
     }
 
     const result = await global.connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
 
     if (result.rows.length === 0 || senha !== result.rows[0].senha) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+      // Em caso de credenciais inválidas, redirecione para a página inicial
+      return res.redirect('/');
     }
 
     // Definir a sessão do usuário
@@ -101,10 +104,30 @@ app.post('/login', async (req, res) => {
     // Log de sucesso
     console.log(`Login bem-sucedido para o usuário: ${email}`);
 
-    res.json({ success: true });
+    // Redirecionar para a página 'hello'
+    res.redirect('/hello');
   } catch (error) {
     console.error('Erro ao fazer login:', error);
-    res.status(500).json({ error: 'Erro no servidor' });
+    // Em caso de erro no servidor, redirecione para a página inicial
+    res.redirect('/');
+  }
+});
+
+// Página 'hello' (adicionar a rota correspondente)
+app.get('/hello', Autenticado, (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'hello.html'));
+});
+
+// Rota para obter informações sobre o usuário logado
+app.get('/api/usuario-logado', (req, res) => {
+  if (req.session.user) {
+    res.json({
+      id_usuario: req.session.user.id_usuario,
+      nome: req.session.user.nome,
+      tipo_usuario: req.session.user.tipo_usuario
+    });
+  } else {
+    res.status(401).json({ error: 'Usuário não logado' });
   }
 });
 
@@ -126,18 +149,7 @@ app.post('/login', async (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Laboratorio.html'));
   });
 
-  app.get('/api/usuario-logado', (req, res) => {
-   
-    if (req.session.user) {
-      res.json({
-        id_usuario: req.session.user.id_usuario,
-        nome: req.session.user.nome,
-        tipo_usuario: req.session.user.tipo_usuario
-      });
-    } else {
-      res.status(401).json({ error: 'Usuário não logado' });
-    }
-  });
+
 
   app.get('/logout', (req, res) => {
     req.session.destroy(err => {
