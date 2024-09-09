@@ -60,16 +60,13 @@ function Autenticado(req, res, next) {
   }
 }
 
-// Executar a função de inicialização
-initializeDatabase();
-
 // Configurar rotas e iniciar o servidor
-initializeDatabase().then(conn => {
-  connection = conn;
+initializeDatabase().then(pool => {
+  connection = pool; // Pool será utilizado para fazer consultas
 
   app.use(express.static(path.join(__dirname, 'public')));
 
-  // Rota principal
+  // Rotas
   app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
