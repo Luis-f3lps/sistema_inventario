@@ -58,11 +58,8 @@ async function initializeDatabase() {
     throw error;
   }
 }
-app.use(express.static(path.join(__dirname, 'public')));
 
-let connection;
-
-// Função para verificar se o usuário está autenticado
+// Middleware para verificar se o usuário está autenticado
 function Autenticado(req, res, next) {
   if (req.session.user) {
     return next();
@@ -70,12 +67,47 @@ function Autenticado(req, res, next) {
     res.redirect('/');
   }
 }
-initializeDatabase().then(pool => {
-  connection = pool; // Pool será utilizado para consultas
 
-  // Exemplo de rota protegida
+// Rota de login
+app.post('/login', async (req, res) => {
+  try {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+      return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
+    }
+
+    const result = await connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
+
+    if (result.rows.length === 0 || senha !== result.rows[0].senha) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
+
+    req.session.user = {
+      nome: result.rows[0].nome_usuario,
+      email: result.rows[0].email,
+      tipo_usuario: result.rows[0].tipo_usuario
+    };
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Erro ao fazer login:', error);
+    res.status(500).json({ error: 'Erro no servidor' });
+  }
+});
+
+// Iniciar o servidor após a conexão com o banco de dados ser estabelecida
+initializeDatabase().then(pool => {
+  global.connection = pool; // Disponibilizar a conexão globalmente
+
+  // Rotas protegidas
   app.get('/dashboard', Autenticado, (req, res) => {
     res.send('Welcome to your dashboard!');
+  });
+
+  // Rota protegida
+  app.get('/protected-route', Autenticado, (req, res) => {
+    res.send('Conteúdo protegido');
   });
 
   // Iniciar o servidor
@@ -87,50 +119,6 @@ initializeDatabase().then(pool => {
 }).catch(error => {
   console.error("Error initializing database:", error);
 });
-
-  // Rota de login
-  app.post('/login', async (req, res) => {
-    try {
-      const { email, senha } = req.body;
-
-      if (!email || !senha) {
-        return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
-      }
-
-      const result = await connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
-
-      if (result.rows.length === 0 || senha !== result.rows[0].senha) {
-        return res.status(401).json({ error: 'Credenciais inválidas' });
-      }
-
-      req.session.user = {
-        nome: result.rows[0].nome_usuario,
-        email: result.rows[0].email,
-        tipo_usuario: result.rows[0].tipo_usuario
-      };
-
-      res.json({ success: true });
-    } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      res.status(500).json({ error: 'Erro no servidor' });
-    }
-  });
-
-    // Rotas protegidas
-    function authenticate(req, res, next) {
-      if (req.session && req.session.userId) {
-          next();
-      } else {
-          res.status(401).send('Não autorizado');
-      }
-  }
-  
-  // Rota protegida
-  app.get('/protected-route', authenticate, (req, res) => {
-      res.send('Conteúdo protegido');
-  });
-
-
 
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
