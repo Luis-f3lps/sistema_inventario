@@ -261,17 +261,6 @@ initializeDatabase().then(pool => {
     });
   });
 
-  // Middleware para desativar cache
-  function disableCache(req, res, next) {
-    res.setHeader('Cache-Control', 'no-store');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-    next();
-  }
-
-  app.use('/protected/*', disableCache);
-
-
   // Rotas para usuários
   app.get('/api/usuarios', Autenticado, async (req, res) => {
     try {
