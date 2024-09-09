@@ -9,6 +9,12 @@ const { Pool } = pkg;
 
 dotenv.config(); // Carrega as variáveis de ambiente
 
+if (!process.env.DATABASE_URL) {
+  console.error("DATABASE_URL não está definido.");
+  process.exit(1); // Finaliza o processo com erro
+}
+
+
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -67,11 +73,9 @@ initializeDatabase().then(pool => {
 
   // Rota inicial
   app.get('/', (req, res) => {
-    const data = {
-      message: 'Hello, world!',
-    };
-    res.json(data);
+    res.sendFile(path.join(__dirname, 'public', 'index.html')); // Certifique-se de que o arquivo index.html existe
   });
+  
 
   // Exemplo de rota protegida
   app.get('/dashboard', Autenticado, (req, res) => {
