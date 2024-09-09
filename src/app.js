@@ -3,16 +3,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import session from 'express-session';
-import pkg from 'pg';
-
-const { Pool } = pkg;
+import pool from './db.js'; // Importa a configuração da conexão com o banco de dados
 
 dotenv.config(); // Carrega as variáveis de ambiente
-
-if (!process.env.DATABASE_URL) {
-  console.error("DATABASE_URL não está definido.");
-  process.exit(1); // Finaliza o processo com erro
-}
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -32,61 +25,6 @@ app.use(session({
     maxAge: 8 * 60 * 60 * 1000, // 8 horas
   }
 }));
-
-
-// Função para inicializar a conexão com o banco de dados
-async function initializeDatabase() {
-  try {
-    console.log("Database URL:", process.env.DATABASE_URL);
-    app.use(express.static(path.join(__dirname, 'public')));
-
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      ssl: {
-        rejectUnauthorized: false // SSL para o Neon
-      }
-    });
-
-    // Testar a conexão
-    const client = await pool.connect();
-    console.log("Connected to PostgreSQL database");
-    client.release();
-
-    return pool;
-  } catch (error) {
-    console.error("Failed to connect to PostgreSQL database:", error);
-    throw error;
-  }
-}
-app.use(express.static(path.join(__dirname, 'public')));
-
-let connection;
-
-// Função para verificar se o usuário está autenticado
-function Autenticado(req, res, next) {
-  if (req.session.user) {
-    return next();
-  } else {
-    res.redirect('/');
-  }
-}
-initializeDatabase().then(pool => {
-  connection = pool; // Pool será utilizado para consultas
-
-  // Exemplo de rota protegida
-  app.get('/dashboard', Autenticado, (req, res) => {
-    res.send('Welcome to your dashboard!');
-  });
-
-  // Iniciar o servidor
-  const port = process.env.PORT || 5000;
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
-  });
-
-}).catch(error => {
-  console.error("Error initializing database:", error);
-});
 
 // Rota de login
 app.post('/login', async (req, res) => {
@@ -129,6 +67,7 @@ function authenticate(req, res, next) {
 app.get('/protected-route', authenticate, (req, res) => {
   res.send('Conteúdo protegido');
 });
+
 
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
