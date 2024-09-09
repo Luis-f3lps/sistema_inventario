@@ -53,6 +53,7 @@ async function initializeDatabase() {
     throw error;
   }
 }
+app.use(express.static(path.join(__dirname, 'public')));
 
 let connection;
 
@@ -64,17 +65,17 @@ function Autenticado(req, res, next) {
     res.redirect('/');
   }
 }
-
+  // Rota inicial
+  app.get('/', (req, res) => {
+    res.send('Hello, world!');
+  });
 // Inicializando banco de dados e configurando rotas
 initializeDatabase().then(pool => {
   connection = pool; // Pool será utilizado para consultas
 
   app.use(express.static(path.join(__dirname, 'public')));
 
-  // Rota inicial
-  app.get('/', (req, res) => {
-    res.send('Hello, world!');
-  });
+
   
 
   // Exemplo de rota protegida
