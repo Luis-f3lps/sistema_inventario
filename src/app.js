@@ -51,7 +51,14 @@ async function initializeDatabase() {
 
 let connection;
 
-
+// Função para verificar autenticação
+function Autenticado(req, res, next) {
+  if (req.session.user) {
+    return next();
+  } else {
+    res.redirect('/');
+  }
+}
 
 // Configurar rotas e iniciar o servidor
 initializeDatabase().then(pool => {
