@@ -12,18 +12,6 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configurar middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(session({
-  secret: 'seuSegredo', // substitua por uma senha 
-  resave: false,
-  saveUninitialized: true,
-  cookie: { 
-    secure: false, // Use 'true' em produção com HTTPS
-    maxAge: 8 * 60 * 60 * 1000, // 8 horas em milissegundos
-  }
-}));
 
 // Inicializar banco de dados
 async function initializeDatabase() {
