@@ -52,7 +52,9 @@ async function initializeDatabase() {
     console.log("Connected to PostgreSQL database");
     client.release();
 
-    return pool;
+    // Definir a conexão globalmente
+    global.connection = pool;
+
   } catch (error) {
     console.error("Failed to connect to PostgreSQL database:", error);
     throw error;
@@ -77,7 +79,12 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
     }
 
-    const result = await connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
+    // Verificar se a conexão está disponível
+    if (!global.connection) {
+      return res.status(500).json({ error: 'Erro na conexão com o banco de dados' });
+    }
+
+    const result = await global.connection.query('SELECT * FROM usuario WHERE email = $1', [email]);
 
     if (result.rows.length === 0 || senha !== result.rows[0].senha) {
       return res.status(401).json({ error: 'Credenciais inválidas' });
@@ -97,9 +104,7 @@ app.post('/login', async (req, res) => {
 });
 
 // Iniciar o servidor após a conexão com o banco de dados ser estabelecida
-initializeDatabase().then(pool => {
-  global.connection = pool; // Disponibilizar a conexão globalmente
-
+initializeDatabase().then(() => {
   // Rotas protegidas
   app.get('/dashboard', Autenticado, (req, res) => {
     res.send('Welcome to your dashboard!');
@@ -108,12 +113,6 @@ initializeDatabase().then(pool => {
   // Rota protegida
   app.get('/protected-route', Autenticado, (req, res) => {
     res.send('Conteúdo protegido');
-  });
-
-  // Iniciar o servidor
-  const port = process.env.PORT || 5000;
-  app.listen(port, () => {
-    console.log(`Server running on port ${port}`);
   });
 
 }).catch(error => {
