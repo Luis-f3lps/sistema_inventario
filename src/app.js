@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import session from 'express-session'; 
 import { Pool } from 'pg';
+import { log } from 'console';
 
 // Carregar variáveis de ambiente
 dotenv.config();
@@ -27,6 +28,8 @@ app.use(session({
   }
 }));
 
+
+app.listen(process.env.PORT, () => console.log("server run na porta 5000"))
 
 // Inicializar banco de dados
 async function initializeDatabase() {
