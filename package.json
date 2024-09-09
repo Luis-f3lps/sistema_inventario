@@ -2,7 +2,7 @@
   "name": "sistema",
   "version": "1.0.0",
   "description": "",
-  "main": "src/public/index.html",
+  "main": "src/app.js",
   "type": "module",
   "engine": {
     "node": "14.x"
@@ -22,8 +22,6 @@
     "express": "^4.19.2",
     "express-session": "^1.18.0",
     "fs": "^0.0.1-security",
-    "mysql": "^2.18.1",
-    "mysql2": "^3.11.0",
     "pdfkit": "^0.15.0"
   },
   "devDependencies": {
