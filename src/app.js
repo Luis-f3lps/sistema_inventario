@@ -39,26 +39,23 @@ function Autenticado(req, res, next) {
 // Inicializar banco de dados
 import { Pool } from 'pg';
 
-// Inicializar banco de dados
 async function initializeDatabase() {
   try {
-    // Logar a URL de conexão
     console.log("Database URL:", process.env.DATABASE_URL);
-
-    // Criar a conexão com o banco de dados
+    
+    // Cria a conexão com o banco de dados
     const pool = new Pool({
       connectionString: process.env.DATABASE_URL,
       ssl: {
         rejectUnauthorized: false
       }
     });
-
-    // Testar a conexão
+    
+    // Testa a conexão
     const client = await pool.connect();
     console.log("Connected to PostgreSQL database");
-    client.release(); // Libere o cliente quando terminar
-
-    return pool; // Retorne o pool de conexões
+    client.release();
+    return pool;
   } catch (error) {
     console.error("Failed to connect to PostgreSQL database:", error);
     throw error;
