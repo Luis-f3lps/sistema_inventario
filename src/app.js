@@ -18,6 +18,9 @@ if (!process.env.DATABASE_URL) {
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const express = require('express');
+const session = require('express-session');
+const pg = require('pg'); // ou o cliente que você está usando para conectar ao PostgreSQL
 
 
 // Middleware para interpretar JSON
