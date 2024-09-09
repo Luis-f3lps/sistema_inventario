@@ -1,8 +1,6 @@
 ﻿import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
-import mysql from 'mysql2/promise';
 import PDFDocument from 'pdfkit';
 import fs from 'fs';
 import session from 'express-session'; 
