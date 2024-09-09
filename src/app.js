@@ -14,6 +14,9 @@ if (!process.env.DATABASE_URL) {
   process.exit(1); // Finaliza o processo com erro
 }
 
+// Middleware para interpretar JSON
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
@@ -68,11 +71,6 @@ function Autenticado(req, res, next) {
 }
 initializeDatabase().then(pool => {
   connection = pool; // Pool será utilizado para consultas
-
-
-  app.use(express.json());
-
-  
 
   // Exemplo de rota protegida
   app.get('/dashboard', Autenticado, (req, res) => {
