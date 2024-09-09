@@ -14,13 +14,15 @@ if (!process.env.DATABASE_URL) {
   process.exit(1); // Finaliza o processo com erro
 }
 
-// Middleware para interpretar JSON
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+
+// Middleware para interpretar JSON
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Configurar middleware de sessão
 app.use(session({
