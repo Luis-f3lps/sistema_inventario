@@ -110,16 +110,6 @@ app.post('/login', async (req, res) => {
 
 // Iniciar o servidor após a conexão com o banco de dados ser estabelecida
 initializeDatabase().then(() => {
-  // Rotas protegidas
-  app.get('/dashboard', Autenticado, (req, res) => {
-    res.send('Welcome to your dashboard!');
-  });
-
-  // Rota protegida
-  app.get('/protected-route', Autenticado, (req, res) => {
-    res.send('Conteúdo protegido');
-  });
-
 
   // Rotas protegidas
   app.get('/Relatorio', Autenticado, (req, res) => {
@@ -222,48 +212,6 @@ initializeDatabase().then(() => {
       console.error('Erro ao adicionar usuário:', error);
       res.status(500).json({ error: 'Erro no servidor' });
     }
-  });
-
-
-
-  // Outras rotas
-  app.get('/Relatorio', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
-  });
-
-  app.get('/Usuarios', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
-  });
-
-  app.get('/Produtos', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Produtos.html'));
-  });
-
-  app.get('/Laboratorio', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Laboratorio.html'));
-  });
-
-  app.get('/api/usuario-logado', (req, res) => {
-    if (req.session.user) {
-      res.json({
-        id_usuario: req.session.user.id_usuario,
-        nome: req.session.user.nome,
-        tipo_usuario: req.session.user.tipo_usuario
-      });
-    } else {
-      res.status(401).json({ error: 'Usuário não logado' });
-    }
-  });
-
-  app.get('/logout', (req, res) => {
-    req.session.destroy(err => {
-      if (err) {
-        console.error('Erro ao destruir a sessão:', err);
-        return res.status(500).json({ error: 'Erro ao fazer logout' });
-      }
-      res.clearCookie('connect.sid');
-      res.redirect('/');
-    });
   });
 
   // Rotas para usuários
