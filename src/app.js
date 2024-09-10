@@ -70,11 +70,14 @@ initializeDatabase().then(() => {
 // Middleware para verificar se o usuário está autenticado
 function Autenticado(req, res, next) {
   if (req.session.user) {
+    console.log('Usuário autenticado:', req.session.user);
     return next();
   } else {
+    console.log('Usuário não autenticado, redirecionando para a página inicial');
     res.redirect('/');
   }
 }
+
 
 // Rota de login
 app.post('/login', async (req, res) => {
@@ -85,7 +88,6 @@ app.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Usuário e senha são obrigatórios' });
     }
 
-    // Verificar se a conexão está disponível
     if (!global.connection) {
       return res.status(500).json({ error: 'Erro na conexão com o banco de dados' });
     }
@@ -96,18 +98,17 @@ app.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    // Definir a sessão do usuário
     req.session.user = {
       nome: result.rows[0].nome_usuario,
       email: result.rows[0].email,
       tipo_usuario: result.rows[0].tipo_usuario
     };
 
-  // Log de sucesso
-  console.log(`Login bem-sucedido para o usuário: ${email}`);
-  console.log('Sessão após login:', req.session.user);
+    console.log(`Login bem-sucedido para o usuário: ${email}`);
+    console.log('Sessão após login:', req.session.user);
 
-    res.json({ success: true });
+    // Redirecionar para a página "Relatorio"
+    res.redirect('/Relatorio');
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ error: 'Erro no servidor' });
