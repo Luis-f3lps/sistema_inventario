@@ -24,14 +24,15 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configurar middleware de sessão
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'seuSegredo', // Use uma variável de ambiente para o segredo
+  secret: process.env.SESSION_SECRET || 'seuSegredo',
   resave: false,
   saveUninitialized: true,
   cookie: { 
-    secure: process.env.NODE_ENV === 'production', // true em produção com HTTPS
+    secure: false, // Defina como false para desenvolvimento local
     maxAge: 8 * 60 * 60 * 1000, // 8 horas
   }
 }));
+
 
 
 // Função para inicializar a conexão com o banco de dados
