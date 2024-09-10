@@ -106,10 +106,10 @@ app.post('/login', async (req, res) => {
     };
 
     console.log(`Login bem-sucedido para o usuário: ${email}`);
-    console.log('Sessão após login:', req.session.user);
     console.log('Diretório atual:', __dirname);
     console.log('Caminho absoluto para public:', path.join(__dirname, 'public'));
-    
+    console.log('Sessão após login:', req.session.user);
+
     // Redirecionar para a página "Relatorio"
     res.redirect('src/public/Relatorio');
   } catch (error) {
