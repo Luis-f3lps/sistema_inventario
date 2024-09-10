@@ -79,7 +79,20 @@ function Autenticado(req, res, next) {
   }
 }
 
+    // Rotas protegidas
+    function authenticate(req, res, next) {
+      if (req.session && req.session.userId) {
+          next();
+      } else {
+          res.status(401).send('Não autorizado');
+      }
+  }
+    // Rota protegida
+    app.get('/protected-route', authenticate, (req, res) => {
+      res.send('Conteúdo protegido');
+  });
 
+  
 // Rota de login
 app.post('/login', async (req, res) => {
   try {
