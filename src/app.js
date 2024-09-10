@@ -144,6 +144,9 @@ app.get('/api/usuario-logado', (req, res) => {
   }
 });
 
+// Middleware para servir arquivos estáticos
+app.use(express.static(path.join(__dirname, 'src', 'public')));
+
 app.get('/Relatorio', Autenticado, (req, res) => {
   const filePath = path.join(__dirname, 'src', 'public', 'Relatorio.html');
   console.log('Caminho absoluto para Relatorio.html:', filePath);
