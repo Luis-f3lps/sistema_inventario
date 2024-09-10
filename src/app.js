@@ -128,8 +128,17 @@ app.get('/api/usuario-logado', (req, res) => {
     res.status(401).json({ error: 'Usuário não logado' });
   }
 });
+
 app.get('/Relatorio', Autenticado, (req, res) => {
-  res.sendFile(path.join(__dirname, '../public', 'Relatorio.html'));
+  // Caminho para o arquivo dentro da pasta src/public
+  const filePath = path.join(__dirname, 'public', 'Relatorio.html');
+  console.log('Tentando servir o arquivo:', filePath);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Erro ao servir o arquivo:', err);
+      res.status(500).send('Erro ao servir o arquivo.');
+    }
+  });
 });
 
   app.get('/Usuarios', Autenticado, (req, res) => {
