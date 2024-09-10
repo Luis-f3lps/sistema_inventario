@@ -365,7 +365,7 @@ app.get('/api/check-auth', (req, res) => {
   /* --------------laboratórios------------------*/
 
  // obter todos os laboratórios
- app.get('/api/laboratorios', Autenticado, async (req, res) => {
+ app.get('/api/laboratorios', async (req, res) => {
   const client = await pool.connect(); // Obtém um cliente do pool de conexões
 
   try {
