@@ -2,8 +2,9 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import pg from 'pg';
-import PgSession from 'connect-pg-simple';
+import session from 'express-session';
+import pkg from 'pg';
+
 const { Pool } = pkg;
 
 dotenv.config(); // Carrega as variáveis de ambiente
@@ -21,18 +22,18 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const pgSession = PgSession(session);
-const pool = new pg.Pool({
-  connectionString: 'postgres://banco_dados_si_owner:mL3xgGaZ6Mky@ep-hidden-haze-a5qqewwm-pooler.us-east-2.aws.neon.tech/banco_dados_si?sslmode=require'
-});
-
+// Configurar middleware de sessão
 app.use(session({
-  store: new pgSession({ pool }),
-  secret: 'seu_segredo',
+  secret: process.env.SESSION_SECRET || 'seuSegredo',
   resave: false,
-  saveUninitialized: false,
-  cookie: { secure: true } // Defina como `true` se estiver usando HTTPS
+  saveUninitialized: true,
+  cookie: { 
+    secure: false, // Defina como false para desenvolvimento local
+    maxAge: 8 * 60 * 60 * 1000, // 8 horas
+  }
 }));
+
+
 
 // Função para inicializar a conexão com o banco de dados
 async function initializeDatabase() {
@@ -344,8 +345,6 @@ app.get('/api/check-auth', (req, res) => {
     res.json({ Autenticado: false });
   }
 });
-
-
 
   /* --------------produtos------------------*/
 
