@@ -2,22 +2,17 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import session from 'express-session'; // Importar o middleware de sessão
 import pg from 'pg';
 import PgSession from 'connect-pg-simple';
+const { Pool } = pkg;
 
-// Configuração do dotenv para variáveis de ambiente
-dotenv.config();
+dotenv.config(); // Carrega as variáveis de ambiente
 
-const { Pool } = pg;
-
-// Verifique se a URL do banco de dados está definida
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL não está definido.");
   process.exit(1); // Finaliza o processo com erro
 }
 
-// Configuração do Express
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,29 +21,31 @@ const __dirname = path.dirname(__filename);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Configuração do Pool de Conexão
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false // SSL para o Neon
-  }
-});
-
-// Configuração do Middleware de Sessão
 const pgSession = PgSession(session);
+const pool = new pg.Pool({
+  connectionString: 'postgres://banco_dados_si_owner:mL3xgGaZ6Mky@ep-hidden-haze-a5qqewwm-pooler.us-east-2.aws.neon.tech/banco_dados_si?sslmode=require'
+});
 
 app.use(session({
   store: new pgSession({ pool }),
-  secret: 'seu_segredo', // Mantenha isso em uma variável de ambiente em produção
+  secret: 'seu_segredo',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: process.env.NODE_ENV === 'production' } // Use `true` se estiver usando HTTPS
+  cookie: { secure: true } // Defina como `true` se estiver usando HTTPS
 }));
 
 // Função para inicializar a conexão com o banco de dados
 async function initializeDatabase() {
   try {
     console.log("Database URL:", process.env.DATABASE_URL);
+    app.use(express.static(path.join(__dirname, 'public')));
+
+    const pool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false // SSL para o Neon
+      }
+    });
 
     // Testar a conexão
     const client = await pool.connect();
@@ -63,7 +60,6 @@ async function initializeDatabase() {
     throw error;
   }
 }
-
 // Iniciar o servidor após a conexão com o banco de dados ser estabelecida
 initializeDatabase().then(() => {
   app.listen(process.env.PORT || 5000, () => {
@@ -82,20 +78,20 @@ function Autenticado(req, res, next) {
   }
 }
 
-// Rota protegida
-function authenticate(req, res, next) {
-  if (req.session && req.session.userId) {
-    next();
-  } else {
-    res.status(401).send('Não autorizado');
+    // Rotas protegidas
+    function authenticate(req, res, next) {
+      if (req.session && req.session.userId) {
+          next();
+      } else {
+          res.status(401).send('Não autorizado');
+      }
   }
-}
+    // Rota protegida
+    app.get('/protected-route', authenticate, (req, res) => {
+      res.send('Conteúdo protegido');
+  });
 
-// Rota protegida
-app.get('/protected-route', authenticate, (req, res) => {
-  res.send('Conteúdo protegido');
-});
-
+  
 // Rota de login
 app.post('/login', async (req, res) => {
   try {
@@ -133,7 +129,6 @@ app.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
-
 
 app.get('/api/usuario-logado', (req, res) => {
    
