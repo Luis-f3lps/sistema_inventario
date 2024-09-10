@@ -69,7 +69,7 @@ initializeDatabase().then(() => {
 });
 
 // Middleware para verificar se o usuário está autenticado
-function Autenticado(req, res) {
+function Autenticado(req, res, next) {
   if (req.session.user) {
     console.log('Usuário autenticado:', req.session.user);
     return next();
@@ -80,7 +80,7 @@ function Autenticado(req, res) {
 }
 
     // Rotas protegidas
-    function authenticate(req, res) {
+    function authenticate(req, res, next) {
       if (req.session && req.session.userId) {
           next();
       } else {
