@@ -148,7 +148,7 @@ app.get('/api/usuario-logado', (req, res) => {
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
 app.get('/Relatorio', Autenticado, (req, res, next) => {
-  res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
+  res.sendFile(path.join(__dirname, 'src', 'public', 'Relatorio.html'));
 });
 
   app.get('/Usuarios', Autenticado, (req, res) => {
