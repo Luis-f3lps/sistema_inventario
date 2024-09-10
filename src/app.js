@@ -147,15 +147,8 @@ app.get('/api/usuario-logado', (req, res) => {
 // Middleware para servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
-app.get('/Relatorio', Autenticado, (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'Relatorio.html');
-  
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Erro ao enviar o arquivo:', err);
-      res.status(err.status).end();
-    }
-  });
+app.get('/Relatorio', Autenticado, (req, res, next) => {
+  res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
 });
 
   app.get('/Usuarios', Autenticado, (req, res) => {
