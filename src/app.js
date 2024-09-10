@@ -144,9 +144,8 @@ app.get('/api/usuario-logado', (req, res) => {
   }
 });
 
-
 app.get('/Relatorio', Autenticado, (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'Relatorio.html');
+  const filePath = path.join(__dirname, 'src', 'public', 'Relatorio.html');
   console.log('Caminho absoluto para Relatorio.html:', filePath);
   res.sendFile(filePath);
 });
