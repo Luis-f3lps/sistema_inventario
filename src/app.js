@@ -148,7 +148,7 @@ app.get('/api/usuario-logado', (req, res) => {
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
 app.get('/Relatorio', Autenticado, (req, res) => {
-  const filePath = path.join(__dirname, 'src', 'public', '/var/task/public/src/Relatorio.html');
+  const filePath = path.join(__dirname, 'public', 'Relatorio.html');
   
   res.sendFile(filePath, (err) => {
     if (err) {
