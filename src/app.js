@@ -33,6 +33,7 @@ app.use(session({
   }
 }));
 
+const pool = new Pool()
 
 
 // Função para inicializar a conexão com o banco de dados
@@ -145,27 +146,53 @@ app.get('/api/usuario-logado', (req, res) => {
 });
 
 
+// Rota para o Relatório
 app.get('/Relatorio', Autenticado, (req, res) => {
   const filePath = path.join(__dirname, 'public', 'relatorio.html');
-  console.log('Caminho absoluto para Relatorio.html:', filePath); // Verifica o caminho
-  res.sendFile(filePath);
+  console.log('Caminho absoluto para Relatorio.html:', filePath);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Erro ao enviar o arquivo Relatorio.html:', err);
+      res.status(500).send('Erro ao enviar o arquivo Relatorio.html.');
+    }
+  });
 });
 
-
-
-  app.get('/Usuarios', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
+// Rota para Usuários
+app.get('/Usuarios', Autenticado, (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'Usuarios.html');
+  console.log('Caminho absoluto para Usuarios.html:', filePath);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Erro ao enviar o arquivo Usuarios.html:', err);
+      res.status(500).send('Erro ao enviar o arquivo Usuarios.html.');
+    }
   });
+});
 
-  app.get('/Produtos', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Produtos.html'));
+// Rota para Produtos
+app.get('/Produtos', Autenticado, (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'Produtos.html');
+  console.log('Caminho absoluto para Produtos.html:', filePath);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Erro ao enviar o arquivo Produtos.html:', err);
+      res.status(500).send('Erro ao enviar o arquivo Produtos.html.');
+    }
   });
+});
 
-  app.get('/Laboratorio', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Laboratorio.html'));
+// Rota para Laboratório
+app.get('/Laboratorio', Autenticado, (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'Laboratorio.html');
+  console.log('Caminho absoluto para Laboratorio.html:', filePath);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Erro ao enviar o arquivo Laboratorio.html:', err);
+      res.status(500).send('Erro ao enviar o arquivo Laboratorio.html.');
+    }
   });
-
-
+});
 
   app.get('/logout', (req, res) => {
     req.session.destroy(err => {
