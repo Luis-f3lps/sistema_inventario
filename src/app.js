@@ -69,7 +69,7 @@ initializeDatabase().then(() => {
 });
 
 // Middleware para verificar se o usuário está autenticado
-function Autenticado(req, res, next) {
+function Autenticado(req, res) {
   if (req.session.user) {
     console.log('Usuário autenticado:', req.session.user);
     return next();
@@ -80,7 +80,7 @@ function Autenticado(req, res, next) {
 }
 
     // Rotas protegidas
-    function authenticate(req, res, next) {
+    function authenticate(req, res) {
       if (req.session && req.session.userId) {
           next();
       } else {
@@ -192,6 +192,7 @@ app.get('/Laboratorio', Autenticado, (req, res) => {
     }
   });
 });
+
 
   app.get('/logout', (req, res) => {
     req.session.destroy(err => {
@@ -346,6 +347,8 @@ app.get('/api/check-auth', (req, res) => {
   }
 });
 
+
+
   /* --------------produtos------------------*/
 
   // Rotas para produtos
@@ -362,7 +365,7 @@ app.get('/api/check-auth', (req, res) => {
   /* --------------laboratórios------------------*/
 
  // obter todos os laboratórios
- app.get('/api/laboratorios', async (req, res) => {
+ app.get('/api/laboratorios', Autenticado, async (req, res) => {
   const client = await pool.connect(); // Obtém um cliente do pool de conexões
 
   try {
