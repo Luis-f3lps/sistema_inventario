@@ -107,7 +107,9 @@ app.post('/login', async (req, res) => {
 
     console.log(`Login bem-sucedido para o usuário: ${email}`);
     console.log('Sessão após login:', req.session.user);
-
+    console.log('Diretório atual:', __dirname);
+    console.log('Caminho absoluto para public:', path.join(__dirname, 'public'));
+    
     // Redirecionar para a página "Relatorio"
     res.redirect('/Relatorio');
   } catch (error) {
@@ -128,6 +130,7 @@ app.get('/api/usuario-logado', (req, res) => {
     res.status(401).json({ error: 'Usuário não logado' });
   }
 });
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/Relatorio', Autenticado, (req, res) => {
   // Caminho para o arquivo dentro da pasta src/public
