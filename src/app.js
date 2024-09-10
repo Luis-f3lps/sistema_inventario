@@ -312,9 +312,11 @@ app.get('/Relatorio', Autenticado, (req, res) => {
 
 app.get('/api/check-auth', (req, res) => {
   if (req.session.user) {
-      res.json({ Autenticado: true });
+    console.log('Usuário autenticado:', req.session.user);
+    res.json({ Autenticado: true });
   } else {
-      res.json({ Autenticado: false });
+    console.log('Nenhum usuário autenticado.');
+    res.json({ Autenticado: false });
   }
 });
 
@@ -389,7 +391,7 @@ app.get('/api/laboratoriosPag', async (req, res) => {
 
 
 // Adicionar um laboratório
-app.post('/api/laboratorios', Autenticado, async (req, res) => {
+app.post('/api/laboratorios', async (req, res) => {
   try {
     const { nome_laboratorio, usuario_email } = req.body;
 
@@ -956,7 +958,7 @@ app.get('/generate-pdf-consumo', async (req, res) => {
 
 
   /* --------------tabela relatorio------------------*/
-app.get('/api/consumos', Autenticado, async (req, res) => {
+app.get('/api/consumos', async (req, res) => {
     try {
         const { startDate, endDate, laboratorio } = req.query;
 
@@ -1105,7 +1107,7 @@ app.get('/api/estoquePag', Autenticado, async (req, res) => {
 });
 
 
-app.get('/api/tabelaregistraentradaInico', Autenticado, async (req, res) => {
+app.get('/api/tabelaregistraentradaInico', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
     let query = `
@@ -1136,7 +1138,7 @@ app.get('/api/tabelaregistraentradaInico', Autenticado, async (req, res) => {
 });
 
 
-app.get('/api/tabelaregistraentrada', Autenticado, async (req, res) => {
+app.get('/api/tabelaregistraentrada', async (req, res) => {
   try {
     const { startDate, endDate, page = 1, limit = 20 } = req.query;
 
