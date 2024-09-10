@@ -144,14 +144,13 @@ app.get('/api/usuario-logado', (req, res) => {
   }
 });
 
-// Middleware para servir arquivos estáticos
-app.use(express.static(path.join(__dirname, 'src', 'public')));
 
 app.get('/Relatorio', Autenticado, (req, res) => {
-  const filePath = path.join(__dirname, 'src', 'public', 'Relatorio.html');
-  console.log('Caminho absoluto para Relatorio.html:', filePath); // Adicionar log
+  const filePath = path.join(__dirname, 'public', 'relatorio.html');
+  console.log('Caminho absoluto para Relatorio.html:', filePath); // Verifica o caminho
   res.sendFile(filePath);
 });
+
 
 
   app.get('/Usuarios', Autenticado, (req, res) => {
