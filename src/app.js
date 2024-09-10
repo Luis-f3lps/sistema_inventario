@@ -151,7 +151,7 @@ app.get('/Relatorio', Autenticado, (req, res, next) => {
   res.sendFile(path.join(__dirname, 'src', 'public', 'Relatorio.html'));
 });
 
-  app.get('/Usuarios', (req, res) => {
+  app.get('/Usuarios', Autenticado, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
   });
 
