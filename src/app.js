@@ -111,7 +111,7 @@ app.post('/login', async (req, res) => {
     console.log('Caminho absoluto para public:', path.join(__dirname, 'public'));
     
     // Redirecionar para a página "Relatorio"
-    res.redirect('/Relatorio');
+    res.redirect('src/public/Relatorio');
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ error: 'Erro no servidor' });
