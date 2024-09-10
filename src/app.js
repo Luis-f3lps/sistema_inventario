@@ -128,10 +128,9 @@ app.get('/api/usuario-logado', (req, res) => {
     res.status(401).json({ error: 'Usuário não logado' });
   }
 });
-  // Rotas protegidas
-  app.get('/Relatorio', Autenticado, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
-  });
+app.get('/Relatorio', Autenticado, (req, res) => {
+  res.sendFile(path.join(__dirname, '../public', 'Relatorio.html'));
+});
 
   app.get('/Usuarios', Autenticado, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'Usuarios.html'));
