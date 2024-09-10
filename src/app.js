@@ -110,8 +110,6 @@ app.post('/login', async (req, res) => {
     console.log('Caminho absoluto para public:', path.join(__dirname, 'public'));
     console.log('Sessão após login:', req.session.user);
 
-    // Redirecionar para a página "Relatorio"
-    res.redirect('src/public/Relatorio');
   } catch (error) {
     console.error('Erro ao fazer login:', error);
     res.status(500).json({ error: 'Erro no servidor' });
@@ -130,18 +128,11 @@ app.get('/api/usuario-logado', (req, res) => {
     res.status(401).json({ error: 'Usuário não logado' });
   }
 });
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/Relatorio', Autenticado, (req, res) => {
-  // Caminho para o arquivo dentro da pasta src/public
-  const filePath = path.join(__dirname, 'public', 'Relatorio.html');
-  console.log('Tentando servir o arquivo:', filePath);
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Erro ao servir o arquivo:', err);
-      res.status(500).send('Erro ao servir o arquivo.');
-    }
-  });
+  res.sendFile(path.join(__dirname, 'public', 'Relatorio.html'));
 });
 
   app.get('/Usuarios', Autenticado, (req, res) => {
