@@ -338,18 +338,33 @@ app.get('/api/check-auth', (req, res) => {
   /* --------------laboratórios------------------*/
 
  // obter todos os laboratórios
-app.get('/api/laboratorios', Autenticado, async (req, res) => {
+ app.get('/api/laboratorios', Autenticado, async (req, res) => {
+  const client = await pool.connect(); // Obtém um cliente do pool de conexões
+
   try {
-      //consulta para obter todos os laboratórios e seus responsáveis
-      const [laboratorios] = await connection.execute(`
-          SELECT laboratorio.id_laboratorio, laboratorio.nome_laboratorio, usuario.nome_usuario AS responsavel, usuario.email
-          FROM laboratorio
-          LEFT JOIN usuario ON laboratorio.usuario_email = usuario.email
-      `);
-      res.json(laboratorios);
+    // Consulta para obter todos os laboratórios e seus responsáveis
+    const query = `
+      SELECT 
+        laboratorio.id_laboratorio, 
+        laboratorio.nome_laboratorio, 
+        usuario.nome_usuario AS responsavel, 
+        usuario.email
+      FROM 
+        laboratorio
+      LEFT JOIN 
+        usuario 
+      ON 
+        laboratorio.usuario_email = usuario.email
+    `;
+
+    const { rows } = await client.query(query); // Executa a consulta
+
+    res.json(rows); // Retorna os resultados
   } catch (error) {
-      console.error('Erro ao obter laboratórios:', error);
-      res.status(500).json({ error: 'Erro no servidor ao obter laboratórios' });
+    console.error('Erro ao obter laboratórios:', error);
+    res.status(500).json({ error: 'Erro no servidor ao obter laboratórios' });
+  } finally {
+    client.release(); // Libere o cliente de volta ao pool
   }
 });
 
@@ -958,7 +973,7 @@ app.get('/generate-pdf-consumo', async (req, res) => {
 
 
   /* --------------tabela relatorio------------------*/
-app.get('/api/consumos', async (req, res) => {
+  app.get('/api/consumos', async (req, res) => {
     try {
         const { startDate, endDate, laboratorio } = req.query;
 
@@ -987,18 +1002,23 @@ app.get('/api/consumos', async (req, res) => {
         const params = [];
 
         if (startDate && endDate) {
-            query += ' WHERE rc.data_consumo BETWEEN ? AND ?';
+            query += ' WHERE rc.data_consumo BETWEEN $1 AND $2';
             params.push(startDate, endDate);
         }
 
         if (laboratorio && laboratorio !== 'todos') {
-            query += params.length ? ' AND rc.id_laboratorio = ?' : ' WHERE rc.id_laboratorio = ?';
+            query += params.length ? ' AND rc.id_laboratorio = $3' : ' WHERE rc.id_laboratorio = $1';
             params.push(laboratorio);
         }
 
         query += ' ORDER BY rc.data_consumo DESC;';
 
-        const [consumos] = await connection.execute(query, params);
+        const client = await pool.connect();
+        const result = await client.query(query, params);
+        const consumos = result.rows;
+
+        client.release();
+        
         res.json(consumos);
     } catch (error) {
         console.error('Erro ao buscar consumos:', error);
@@ -1108,6 +1128,8 @@ app.get('/api/estoquePag', Autenticado, async (req, res) => {
 
 
 app.get('/api/tabelaregistraentradaInico', async (req, res) => {
+  const client = await pool.connect(); // Obtém um cliente do pool de conexões
+
   try {
     const { startDate, endDate } = req.query;
     let query = `
@@ -1117,28 +1139,36 @@ app.get('/api/tabelaregistraentradaInico', async (req, res) => {
         r.quantidade, 
         e.nome_produto, 
         r.descricao
-      FROM registro_entrada r
-      JOIN estoque e ON r.id_estoque = e.id_estoque
+      FROM 
+        registro_entrada r
+      JOIN 
+        estoque e 
+      ON 
+        r.id_estoque = e.id_estoque
     `;
     
     const params = [];
     if (startDate && endDate) {
-      query += ' WHERE r.data_entrada BETWEEN ? AND ?';
+      query += ' WHERE r.data_entrada BETWEEN $1 AND $2';
       params.push(startDate, endDate);
     }
 
-    query += ' ORDER BY r.data_entrada DESC, r.data_entrada ASC';
+    query += ' ORDER BY r.data_entrada DESC'; // Ordena apenas pela data em ordem decrescente
 
-    const [rows] = await connection.execute(query, params);
-    res.json(rows);
+    const { rows } = await client.query(query, params); // Executa a consulta
+
+    res.json(rows); // Retorna os resultados
   } catch (error) {
     console.error('Erro ao buscar registros de entrada:', error);
     res.status(500).json({ error: 'Erro ao buscar registros de entrada' });
+  } finally {
+    client.release(); // Libere o cliente de volta ao pool
   }
 });
 
-
 app.get('/api/tabelaregistraentrada', async (req, res) => {
+  const client = await pool.connect(); // Obtém um cliente do pool de conexões
+
   try {
     const { startDate, endDate, page = 1, limit = 20 } = req.query;
 
@@ -1159,23 +1189,28 @@ app.get('/api/tabelaregistraentrada', async (req, res) => {
     
     const params = [];
     if (startDate && endDate) {
-      query += ' WHERE r.data_entrada BETWEEN ? AND ?';
+      query += ' WHERE r.data_entrada BETWEEN $1 AND $2';
       params.push(startDate, endDate);
     }
 
-    query += ' ORDER BY r.data_entrada DESC LIMIT ? OFFSET ?';
+    query += ' ORDER BY r.data_entrada DESC LIMIT $3 OFFSET $4';
     params.push(limitInt, offset);
 
-    const [rows] = await connection.execute(query, params);
+    // Executando a consulta principal
+    const result = await client.query(query, params);
+    const rows = result.rows;
 
-    const [countResult] = await connection.query(`
+    // Consulta para contar o número total de registros
+    const countQuery = `
       SELECT COUNT(*) as total 
       FROM registro_entrada r 
       JOIN estoque e ON r.id_estoque = e.id_estoque
-      ${startDate && endDate ? 'WHERE r.data_entrada BETWEEN ? AND ?' : ''}
-    `, startDate && endDate ? [startDate, endDate] : []);
+      ${startDate && endDate ? 'WHERE r.data_entrada BETWEEN $1 AND $2' : ''}
+    `;
 
-    const totalItems = countResult[0].total;
+    const countParams = startDate && endDate ? [startDate, endDate] : [];
+    const countResult = await client.query(countQuery, countParams);
+    const totalItems = parseInt(countResult.rows[0].total, 10);
     const totalPages = Math.ceil(totalItems / limitInt);
 
     res.json({
@@ -1187,8 +1222,11 @@ app.get('/api/tabelaregistraentrada', async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar registros de entrada:', error);
     res.status(500).json({ error: 'Erro ao buscar registros de entrada' });
+  } finally {
+    client.release(); // Libere o cliente de volta ao pool
   }
 });
+
 
 
 app.get('/api/tabelaregistraConsumo', Autenticado, async (req, res) => {
@@ -1260,30 +1298,46 @@ app.get('/api/tabelaregistraConsumo', Autenticado, async (req, res) => {
 
 
 app.post('/api/filter_records', Autenticado, async (req, res) => {
+  const client = await pool.connect();
+  
   try {
-      const { startDate, endDate } = req.body; 
+    const { startDate, endDate } = req.body;
 
-      // Verifica se as datas 
-      if (!startDate || !endDate) {
-          return res.status(400).json({ error: 'Data inicial e final são obrigatórias.' });
-      }
+    // Verifica se as datas são fornecidas
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Data inicial e final são obrigatórias.' });
+    }
 
-      // Consulta para filtrar registros entre as datas
-      const query = `
-          SELECT r.id_entrada, r.data_entrada, r.quantidade, e.nome_produto, r.descricao
-          FROM registro_entrada r
-          JOIN estoque e ON r.id_estoque = e.id_estoque
-          WHERE r.data_entrada BETWEEN ? AND ?
-          ORDER BY r.data_entrada DESC
-      `;
+    // Consulta para filtrar registros entre as datas
+    const query = `
+      SELECT 
+        r.id_entrada, 
+        r.data_entrada, 
+        r.quantidade, 
+        e.nome_produto, 
+        r.descricao
+      FROM 
+        registro_entrada r
+      JOIN 
+        estoque e 
+      ON 
+        r.id_estoque = e.id_estoque
+      WHERE 
+        r.data_entrada BETWEEN $1 AND $2
+      ORDER BY 
+        r.data_entrada DESC
+    `;
 
-      const [rows] = await connection.promise().query(query, [startDate, endDate]);
+    const { rows } = await client.query(query, [startDate, endDate]);
 
-      res.status(200).json(rows);
+    res.status(200).json(rows);
   } catch (error) {
-      console.error('Erro ao filtrar registros:', error);
-      res.status(500).json({ error: 'Erro ao filtrar registros.' });
+    console.error('Erro ao filtrar registros:', error);
+    res.status(500).json({ error: 'Erro ao filtrar registros.' });
+  } finally {
+    client.release(); // Libere o cliente de volta ao pool
   }
 });
+
 
 export default app;
