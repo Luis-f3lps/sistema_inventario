@@ -148,10 +148,10 @@ app.get('/api/usuario-logado', (req, res) => {
 app.use(express.static(path.join(__dirname, 'src', 'public')));
 
 app.get('/Relatorio', Autenticado, (req, res) => {
-  const filePath = path.join(__dirname, 'src', 'public', 'Relatorio.html');
+  const filePath = path.join(__dirname, 'src', 'public', 'relatorio.html');
   
   // Log para verificar o caminho absoluto
-  console.log('Caminho absoluto para Relatorio.html:', filePath);
+  console.log('Caminho absoluto para relatorio.html:', filePath);
 
   res.sendFile(filePath, (err) => {
     if (err) {
