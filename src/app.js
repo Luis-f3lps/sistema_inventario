@@ -109,6 +109,8 @@ app.post('/login', async (req, res) => {
     console.log('Diretório atual:', __dirname);
     console.log('Caminho absoluto para public:', path.join(__dirname, 'public'));
     console.log('Sessão após login:', req.session.user);
+    
+    res.json({ success: true });
 
   } catch (error) {
     console.error('Erro ao fazer login:', error);
